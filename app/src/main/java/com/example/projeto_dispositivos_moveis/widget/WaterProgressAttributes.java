@@ -17,36 +17,36 @@ final class WaterProgressAttributes {
     private final int progressColor;
     private final int overColor;
     private final int textColor;
-    private final String title;
+    private final int outlineColor;
 
     private WaterProgressAttributes(int maxValue, int progressColor, int overColor,
-                                    int textColor, String title) {
+                                    int textColor, int outlineColor) {
         this.maxValue = maxValue > 0 ? maxValue : DEFAULT_MAX_VALUE;
         this.progressColor = progressColor;
         this.overColor = overColor;
         this.textColor = textColor;
-        this.title = title;
+        this.outlineColor = outlineColor;
     }
 
     static WaterProgressAttributes from(Context context, @Nullable AttributeSet attrs) {
         int progressColor = ContextCompat.getColor(context, R.color.water);
         int overColor = ContextCompat.getColor(context, R.color.water_over);
-        int textColor = ContextCompat.getColor(context, R.color.foreground);
-        String title = context.getString(R.string.titulo_componente);
+        int textColor = ContextCompat.getColor(context, R.color.primary);
+        int outlineColor = ContextCompat.getColor(context, R.color.foreground);
 
         if (attrs == null) {
-            return new WaterProgressAttributes(DEFAULT_MAX_VALUE, progressColor, overColor, textColor, title);
+            return new WaterProgressAttributes(DEFAULT_MAX_VALUE, progressColor, overColor,
+                    textColor, outlineColor);
         }
 
         TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.WaterProgressView, 0, 0);
         try {
-            String customTitle = array.getString(R.styleable.WaterProgressView_title);
             return new WaterProgressAttributes(
                     array.getInt(R.styleable.WaterProgressView_maxValue, DEFAULT_MAX_VALUE),
                     array.getColor(R.styleable.WaterProgressView_progressColor, progressColor),
                     array.getColor(R.styleable.WaterProgressView_overColor, overColor),
                     array.getColor(R.styleable.WaterProgressView_textColor, textColor),
-                    customTitle != null ? customTitle : title);
+                    array.getColor(R.styleable.WaterProgressView_outlineColor, outlineColor));
         } finally {
             array.recycle();
         }
@@ -68,7 +68,7 @@ final class WaterProgressAttributes {
         return textColor;
     }
 
-    String getTitle() {
-        return title;
+    int getOutlineColor() {
+        return outlineColor;
     }
 }

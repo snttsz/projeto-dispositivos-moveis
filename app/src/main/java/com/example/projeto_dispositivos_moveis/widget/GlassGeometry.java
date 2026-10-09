@@ -10,7 +10,7 @@ final class GlassGeometry {
 
     private static final float MARGIN_DP = 8f;
     private static final float TEXT_DESCENT_RATIO = 0.25f;
-    private static final float TITLE_SIZE_RATIO = 0.075f;
+    private static final float CAPTION_SIZE_RATIO = 0.075f;
     private static final float LABEL_SIZE_RATIO = 0.11f;
     private static final float CAPTION_GAP_RATIO = 1.3f;
     private static final float GLASS_WIDTH_PER_HEIGHT = 0.667f;
@@ -33,8 +33,7 @@ final class GlassGeometry {
     private int width;
     private int height;
     private float centerX;
-    private float titleSize;
-    private float titleBaseline;
+    private float captionSize;
     private float labelSize;
     private float labelBaseline;
     private float captionBaseline;
@@ -59,16 +58,15 @@ final class GlassGeometry {
 
     private void computeTextBands() {
         float margin = margin();
-        titleSize = Math.min(height, width) * TITLE_SIZE_RATIO;
+        captionSize = Math.min(height, width) * CAPTION_SIZE_RATIO;
         labelSize = Math.min(height, width) * LABEL_SIZE_RATIO;
-        titleBaseline = margin + titleSize;
-        captionBaseline = height - margin - titleSize * TEXT_DESCENT_RATIO;
-        labelBaseline = captionBaseline - titleSize * CAPTION_GAP_RATIO - labelSize * TEXT_DESCENT_RATIO;
+        captionBaseline = height - margin - captionSize * TEXT_DESCENT_RATIO;
+        labelBaseline = captionBaseline - captionSize * CAPTION_GAP_RATIO - labelSize * TEXT_DESCENT_RATIO;
     }
 
     private void computeGlass() {
         float margin = margin();
-        float availableTop = titleBaseline + margin * 1.5f;
+        float availableTop = margin * 2f;
         float availableBottom = labelBaseline - labelSize - margin;
         float availableHeight = Math.max(availableBottom - availableTop, 1f);
 
@@ -133,12 +131,8 @@ final class GlassGeometry {
         return centerX;
     }
 
-    float getTitleSize() {
-        return titleSize;
-    }
-
-    float getTitleBaseline() {
-        return titleBaseline;
+    float getCaptionSize() {
+        return captionSize;
     }
 
     float getLabelSize() {

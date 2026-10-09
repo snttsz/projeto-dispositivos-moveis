@@ -18,7 +18,6 @@ final class WaterProgressPainter {
     private final Paint surfacePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint outlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint sparklePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint titlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint alertPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -28,7 +27,6 @@ final class WaterProgressPainter {
         configureFillPaint(sparklePaint);
         configureSurfacePaint();
         configureOutlinePaint();
-        configureTextPaint(titlePaint);
         configureTextPaint(labelPaint);
         configureTextPaint(alertPaint);
     }
@@ -45,7 +43,7 @@ final class WaterProgressPainter {
     private void configureOutlinePaint() {
         outlinePaint.setStyle(Paint.Style.STROKE);
         outlinePaint.setStrokeJoin(Paint.Join.ROUND);
-        outlinePaint.setColor(attributes.getTextColor());
+        outlinePaint.setColor(attributes.getOutlineColor());
     }
 
     private void configureTextPaint(Paint paint) {
@@ -55,7 +53,6 @@ final class WaterProgressPainter {
 
     void draw(Canvas canvas, GlassGeometry geometry, WaterProgressFrame frame) {
         int waterColor = waterColor(frame);
-        drawTitle(canvas, geometry);
         drawWater(canvas, geometry, frame, waterColor);
         drawOutline(canvas, geometry);
         drawSparkles(canvas, geometry, frame, waterColor);
@@ -65,12 +62,6 @@ final class WaterProgressPainter {
 
     private int waterColor(WaterProgressFrame frame) {
         return frame.isOverGoal() ? attributes.getOverColor() : attributes.getProgressColor();
-    }
-
-    private void drawTitle(Canvas canvas, GlassGeometry geometry) {
-        titlePaint.setColor(attributes.getTextColor());
-        drawCenteredText(canvas, geometry, titlePaint, attributes.getTitle(),
-                geometry.getTitleSize(), geometry.getTitleBaseline());
     }
 
     private void drawWater(Canvas canvas, GlassGeometry geometry, WaterProgressFrame frame, int color) {
@@ -143,7 +134,7 @@ final class WaterProgressPainter {
         }
         alertPaint.setColor(attributes.getOverColor());
         drawCenteredText(canvas, geometry, alertPaint, frame.getAlert(),
-                geometry.getTitleSize(), geometry.getCaptionBaseline());
+                geometry.getCaptionSize(), geometry.getCaptionBaseline());
     }
 
     private void drawCenteredText(Canvas canvas, GlassGeometry geometry, Paint paint,
