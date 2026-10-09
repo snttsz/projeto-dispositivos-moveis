@@ -1,3 +1,34 @@
 <resources>
-    <string name="app_name">projeto-dispositivos-moveis</string>
+    <string name="app_name">Meu consumo de água</string>
+
+    <string name="titulo_cabecalho">Meu consumo de água</string>
+    <string name="titulo_componente">Consumo diário de água</string>
+    <string name="registros_titulo">Registros de hoje</string>
+    <string name="registros_vazio">Nenhum registro ainda.</string>
+
+    <string name="meta_label">Meta: %1$d ml</string>
+    <string name="meta_alterar">ALTERAR META</string>
+    <string name="meta_salvar">SALVAR</string>
+    <string name="meta_hint">Meta (ml)</string>
+
+    <string name="quantidade_hint">Quantidade (ml)</string>
+    <string name="registrar">REGISTRAR</string>
+    <string name="registro_volume">%1$d ml</string>
+
+    <string name="percentual_meta">%1$d%% da meta</string>
+    <string name="absoluto_meta">%1$d / %2$d ml</string>
+
+    <string name="status_sem_consumo">VOCÊ PRECISA BEBER ÁGUA D:&lt;</string>
+    <string name="status_meta_batida">Meta batida! Parabéns! :)</string>
+    <string name="status_meta_ultrapassada">Meta ultrapassada!</string>
+
+    <string name="erro_volume_invalido">Informe um volume válido, maior que zero.</string>
+    <string name="erro_volume_maximo">O volume máximo por registro é %1$d ml.</string>
+    <string name="erro_meta_invalida">Informe uma meta válida, maior que zero.</string>
+    <string name="erro_meta_maxima">A meta máxima é %1$d ml.</string>
+
+    <string name="teste_menos">−500 ml</string>
+    <string name="teste_mais">+500 ml</string>
+    <string name="teste_meta_pequena">Meta 1000 ml</string>
+    <string name="teste_meta_padrao">Meta 2000 ml</string>
 </resources>

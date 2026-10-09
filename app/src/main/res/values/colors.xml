@@ -2,4 +2,15 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="primary">#0077C8</color>
+    <color name="water">#17A2E3</color>
+    <color name="water_over">#1D6BCB</color>
+    <color name="foreground">#082642</color>
+    <color name="alert">#D92D20</color>
+    <color name="success">#2E9E4F</color>
+    <color name="background">#EEF8FF</color>
+    <color name="secondary">#F1F5F9</color>
+    <color name="border">#E2E8F0</color>
+    <color name="muted">#64748B</color>
 </resources>

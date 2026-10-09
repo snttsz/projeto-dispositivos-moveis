@@ -1,0 +1,562 @@
+<!doctype html><html lang='pt-BR'><meta charset='utf-8'><title>Plano de Implementação</title><style>
+@page{size:A4;margin:16mm 14mm}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:10.5pt;line-height:1.45;color:#1a2433}
+h1{color:#0077C8;font-size:22pt;border-bottom:3px solid #0077C8;padding-bottom:6px}
+h2{color:#0077C8;font-size:15pt;margin-top:22px;border-bottom:1px solid #cfe3f3;padding-bottom:3px;break-after:avoid}
+h3{color:#082642;font-size:12pt;break-after:avoid}
+h1+p{color:#445}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:9.5pt;break-inside:avoid}
+th{background:#0077C8;color:#fff;text-align:left}
+th,td{border:1px solid #cfd8e3;padding:4px 7px;vertical-align:top}
+tr:nth-child(even) td{background:#f4f8fc}
+code{background:#eef3f8;padding:1px 4px;border-radius:3px;font-family:Consolas,monospace;font-size:9.2pt}
+pre{background:#eef3f8;padding:8px 10px;border-radius:6px;break-inside:avoid}
+pre code{background:none;padding:0}
+blockquote{border-left:4px solid #17A2E3;background:#f1f8fd;margin:8px 0;padding:4px 12px}
+img{display:block;margin:4px auto;border:1px solid #cfd8e3;border-radius:6px}
+ul{padding-left:20px}li{margin:2px 0}
+hr{border:none;border-top:1px solid #cfd8e3}
+</style><body><h1>Plano de Implementação — Avaliação 2</h1>
+<p><strong>Aplicativo "Meu consumo de água"</strong> · Computação para Dispositivos Móveis
+Alunas: Glenda Santana e Letícia Almeida · Entrega e apresentação: <strong>15/10/2026</strong></p>
+<hr />
+<h2>1. Resumo do que precisa ser entregue</h2>
+<p>Um app Android em <strong>Java</strong> que:</p>
+<ol>
+<li>Tem uma <strong>View customizada <code>WaterProgressView</code></strong>, desenhada com <code>Canvas</code>, reutilizável, com atributos XML (<code>progressColor</code>, <code>textColor</code>, <code>maxValue</code>) lidos com <code>TypedArray</code>.</li>
+<li>Deixa o usuário <strong>definir/alterar a meta diária</strong> (ml) e <strong>registrar volumes</strong> (ml) ao longo do dia.</li>
+<li>Mostra o <strong>consumo de cada registro</strong>, o <strong>acumulado</strong> e o progresso no componente gráfico, com <strong>animação suave</strong> ao atualizar.</li>
+<li><strong>Persiste</strong> meta, registros (volume + horário) e acumulado, recuperando tudo ao reabrir o app.</li>
+<li>Permite <strong>passar de 100%</strong> e mostra um <strong>alerta visual</strong> (no componente e na tela) enquanto acumulado &gt; meta; o alerta some se a meta for alterada e a condição deixar de valer.</li>
+<li>Ao <strong>tocar no componente</strong>, alterna entre modo <strong>percentual</strong> ("75%") e <strong>absoluto</strong> ("1500 / 2000 ml").</li>
+<li>Considera o <strong>dia</strong>: registros de dias anteriores são descartados quando a data do sistema muda.</li>
+<li>Será avaliado com <strong>defesa oral do código</strong> — então tudo que fizermos deve ser algo que a gente consiga explicar.</li>
+</ol>
+<h2>2. Ponto de partida</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Situação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Projeto <code>projeto-dispositivos-moveis-master</code></td>
+<td>Esqueleto Android Studio com <code>MainActivity</code> vazia (só "Hello World"), Java 11, tema Material3 DayNight, <code>minSdk 33</code>, <code>targetSdk 37</code>. Sem nenhuma classe própria ainda.</td>
+</tr>
+<tr>
+<td>Atividades de aula (<code>GUIBasico</code>) e slides 3 a 6</td>
+<td><strong>Não são considerados parte do trabalho pronto.</strong> Tudo será construído do zero neste repositório; servem só como referência de estudo.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Do esqueleto aproveitamos apenas a configuração (Gradle, tema, <code>MainActivity</code> e <code>activity_main.xml</code> de exemplo, que serão reescritos). Nenhuma lógica do app existe ainda.</p>
+<p>Observação: o projeto está aninhado (<code>projeto-dispositivos-moveis-master/projeto-dispositivos-moveis-master</code>). O código vai dentro da pasta interna, que é a que tem o <code>build.gradle.kts</code>.</p>
+</blockquote>
+<h2>3. O protótipo (design a seguir)</h2>
+<p>Tela única, estilo Android com cabeçalho azul. Capturas do protótipo em cada estado:</p>
+<table>
+<thead>
+<tr>
+<th>0%</th>
+<th>Parcial (75%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="0%" src="img/proto-0.png" width="250" /></td>
+<td><img alt="Parcial" src="img/proto-parcial.png" width="250" /></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>100%</th>
+<th>Acima de 100% (modo ml)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="100%" src="img/proto-100.png" width="250" /></td>
+<td><img alt="Acima" src="img/proto-acima.png" width="250" /></td>
+</tr>
+</tbody>
+</table>
+<h3>3.1 Elementos da tela (de cima para baixo)</h3>
+<ol>
+<li><strong>Cabeçalho</strong> azul com o título "Meu consumo de água" (texto branco, negrito).</li>
+<li><strong>Mensagem de status</strong> (uma linha, negrito, centralizada), que depende do estado:
+   - 0 ml registrados → vermelho: <em>"VOCÊ PRECISA BEBER ÁGUA D:&lt;"</em>
+   - acumulado == meta → verde: <em>"Meta batida! Parabéns! :)"</em>
+   - acumulado &gt; meta → azul escuro: <em>"Meta ultrapassada!"</em>
+   - demais casos → mensagem oculta</li>
+<li><strong>Copo (a <code>WaterProgressView</code>)</strong>: trapézio com contorno azul-marinho grosso; a água sobe proporcionalmente ao percentual, com uma linha mais escura na superfície. Em ≥100% aparecem <strong>brilhos (✦ ●)</strong> ao redor. Acima de 100% o copo fica cheio e a água muda para um <strong>azul mais escuro</strong>.</li>
+<li><strong>Texto grande abaixo do copo</strong>: <code>75% da meta</code> ou <code>1500 / 2000 ml</code> (alterna ao tocar no copo). Fica azul escuro quando ultrapassa a meta.</li>
+<li><strong>Faixa cinza-clara</strong>: <code>Meta: 2000 ml</code> à esquerda e <code>ALTERAR META</code> à direita; ao tocar, vira campo numérico + <code>SALVAR</code>.</li>
+<li><strong>Linha de registro</strong>: campo <code>Quantidade (ml)</code> + botão azul <code>REGISTRAR</code>.</li>
+<li><strong>"Registros de hoje"</strong>: lista com horário à esquerda e volume à direita (<code>08:10 — 500 ml</code>); vazia mostra <em>"Nenhum registro ainda."</em></li>
+</ol>
+<h3>3.2 Paleta (valores aproximados, tirados do CSS do protótipo — ajustar na tela)</h3>
+<table>
+<thead>
+<tr>
+<th>Uso</th>
+<th>Cor aproximada</th>
+<th>Nome em <code>colors.xml</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cabeçalho, botões, textos de destaque</td>
+<td><code>#0077C8</code></td>
+<td><code>primary</code></td>
+</tr>
+<tr>
+<td>Água</td>
+<td><code>#17A2E3</code></td>
+<td><code>water</code></td>
+</tr>
+<tr>
+<td>Água acima da meta / texto acima da meta</td>
+<td><code>#1D6BCB</code></td>
+<td><code>water_over</code></td>
+</tr>
+<tr>
+<td>Contorno do copo / texto principal</td>
+<td><code>#082642</code></td>
+<td><code>foreground</code></td>
+</tr>
+<tr>
+<td>Alerta "beber água"</td>
+<td><code>#D92D20</code></td>
+<td><code>alert</code></td>
+</tr>
+<tr>
+<td>Sucesso (meta batida)</td>
+<td><code>#2E9E4F</code></td>
+<td><code>success</code></td>
+</tr>
+<tr>
+<td>Fundo da tela</td>
+<td><code>#EEF8FF</code></td>
+<td><code>background</code></td>
+</tr>
+<tr>
+<td>Faixa da meta / bordas da lista</td>
+<td><code>#F1F5F9</code> / <code>#E2E8F0</code></td>
+<td><code>secondary</code> / <code>border</code></td>
+</tr>
+</tbody>
+</table>
+<h3>3.3 Diferenças deliberadas entre o protótipo web e o app</h3>
+<ul>
+<li>Os botões "0% / Parcial / 100% / Acima de 100% / Novo dia" no topo do protótipo são <strong>só para demonstrar estados</strong>. <strong>Não entram no app</strong>; o estado vem dos dados reais. O "Novo dia" é substituído pela <strong>detecção automática pela data do sistema</strong> (exigência da avaliação).</li>
+<li>A avaliação diz que o <strong>texto com o percentual e o título fazem parte da <code>WaterProgressView</code></strong>. Então o título ("Consumo diário de água"), o copo e o texto <code>75% da meta</code> / <code>1500 / 2000 ml</code> são <strong>desenhados dentro do componente</strong> (no protótipo o texto está num <code>TextView</code> à parte).</li>
+<li>Adotamos a <strong>mesma regra de "ultrapassou" do protótipo, mas sobre ml</strong> (<code>acumulado &gt; meta</code>), não sobre o percentual arredondado — assim 2001/2000 ml (que arredonda para 100%) já conta como ultrapassou.</li>
+</ul>
+<h2>4. Arquitetura proposta</h2>
+<p>Poucas classes, cada uma com uma responsabilidade (ideia de MVC: Model / View / Controller = Activity).</p>
+<pre><code>com.example.projeto_dispositivos_moveis
+├── MainActivity.java              Controller: liga tela, componente e dados
+├── model
+│   ├── RegistroConsumo.java       Model: um registro (ml + instante em millis)
+│   └── ConsumoStorage.java        Model: lê/grava no SharedPreferences, regras do dia
+└── widget
+    └── WaterProgressView.java     View customizada (a &quot;biblioteca interna&quot;)
+
+res/
+├── layout/activity_main.xml
+├── layout/item_registro.xml       (uma linha da lista: horário + volume)
+├── values/attrs.xml               atributos do WaterProgressView
+├── values/colors.xml, strings.xml, themes.xml
+└── drawable/ (fundos arredondados dos campos/faixa, se necessário)
+</code></pre>
+<h3>4.1 <code>WaterProgressView</code> — contrato público</h3>
+<table>
+<thead>
+<tr>
+<th>Membro</th>
+<th>Descrição</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Construtor <code>(Context, AttributeSet)</code></td>
+<td>Lê <code>progressColor</code>, <code>textColor</code>, <code>maxValue</code> (+ opcionais <code>overColor</code>, <code>title</code>) com <code>TypedArray</code> e <code>recycle()</code> no <code>finally</code>, com <code>obtainStyledAttributes(attrs, R.styleable.WaterProgressView, 0, 0)</code>.</td>
+</tr>
+<tr>
+<td><code>setMaxValue(int ml)</code></td>
+<td>Altera a meta em tempo de execução e reanima.</td>
+</tr>
+<tr>
+<td><code>setConsumo(int ml)</code></td>
+<td>Informa o acumulado; calcula <code>percentual = ml * 100 / maxValue</code> e chama <code>setProgress</code>.</td>
+</tr>
+<tr>
+<td><code>setProgress(int percentual)</code></td>
+<td><strong>Método exigido.</strong> Aceita valores &gt; 100 (sem limitar). Inicia o <code>ValueAnimator</code> do valor exibido atual até o novo e chama <code>invalidate()</code> a cada quadro.</td>
+</tr>
+<tr>
+<td><code>isAcimaDaMeta()</code></td>
+<td><code>true</code> se acumulado &gt; meta (usado também pela Activity).</td>
+</tr>
+<tr>
+<td><code>setModoAbsoluto(boolean)</code> / alternância no toque</td>
+<td><code>performClick()</code> inverte o modo; guardar o modo no próprio componente.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>onDraw</code> (ordem de desenho):</strong>
+1. Título "Consumo diário de água" no topo (<code>drawText</code>).
+2. Copo: <code>Path</code> do trapézio → <code>canvas.save()</code> → <code>clipPath(copo)</code> → <code>drawRect</code> da água (altura = <code>min(percentual,100)%</code> do copo) → <code>restore()</code>.
+3. Linha de superfície da água (se 0 &lt; p &lt; 100).
+4. Contorno do copo (<code>Paint.Style.STROKE</code>, traço grosso).
+5. Brilhos ✦ ● se <code>p &gt;= 100</code>.
+6. Texto central: <code>"75% da meta"</code> ou <code>"1500 / 2000 ml"</code>; cor muda para <code>water_over</code> se acima da meta, e aparece a legenda <strong>"Meta ultrapassada!"</strong>.</p>
+<p><strong>Cuidados técnicos:</strong>
+- Criar os <code>Paint</code> e o <code>Path</code> <strong>uma vez</strong> (no construtor / <code>onSizeChanged</code>), não dentro do <code>onDraw</code> (criar o <code>Paint</code> dentro do <code>onDraw</code> funciona, mas aqui ele roda a cada quadro da animação).
+- Calcular a geometria do copo em <code>onSizeChanged</code> com base em <code>getWidth()/getHeight()</code> (sem coordenadas fixas em pixels). Assim funciona com <code>200dp x 200dp</code> ou qualquer outro tamanho.
+- Tratar <code>maxValue &lt;= 0</code> (evitar divisão por zero).
+- Valor exibido na animação é <code>float</code>; o texto mostra o inteiro arredondado.</p>
+<h3>4.2 Persistência — escolha e justificativa</h3>
+<p><strong>Escolha: <code>SharedPreferences</code>.</strong></p>
+<blockquote>
+<p>Justificativa (para o texto da entrega e a defesa oral): os dados são poucos (uma meta, uma data e uma lista curta de registros de um único dia), sem consultas complexas nem relacionamentos. <code>SharedPreferences</code> é o mecanismo simples de pares chave-valor, é simples, privado ao app e mantém os dados após fechar o app. SQLite/Room seriam excessivos para esse volume.</p>
+</blockquote>
+<p><strong>Chaves (arquivo <code>"ConsumoAgua"</code>, <code>MODE_PRIVATE</code>):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Chave</th>
+<th>Tipo</th>
+<th>Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>meta_ml</code></td>
+<td>int</td>
+<td>Meta diária (padrão 2000)</td>
+</tr>
+<tr>
+<td><code>data_dia</code></td>
+<td>String</td>
+<td>Dia dos registros no formato <code>yyyy-MM-dd</code></td>
+</tr>
+<tr>
+<td><code>registros</code></td>
+<td>String</td>
+<td>Lista serializada: <code>instanteMillis:ml;instanteMillis:ml;...</code></td>
+</tr>
+<tr>
+<td><code>acumulado_ml</code></td>
+<td>int</td>
+<td>Soma dos registros do dia (exigido pela avaliação)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>A lista vira String com <code>split(";")</code>/<code>split(":")</code> — só <code>String</code>, <code>Long.parseLong</code>, <code>Integer.parseInt</code>; sem biblioteca nova.</li>
+<li>O <strong>acumulado também é gravado</strong> (a avaliação pede), mas ao carregar <strong>confere-se</strong> com a soma dos registros e a soma prevalece, evitando inconsistência.</li>
+<li>Gravar com <code>apply()</code> <strong>a cada ação</strong> (registrar, alterar meta) — não só no <code>onPause</code>, para não perder dados se o app for encerrado.</li>
+</ul>
+<p><strong>Regra do novo dia (<code>ConsumoStorage.verificarNovoDia()</code>):</strong>
+1. Pegar a data de hoje (<code>yyyy-MM-dd</code>).
+2. Se <code>data_dia</code> ≠ hoje → apagar <code>registros</code>, zerar <code>acumulado_ml</code>, gravar <code>data_dia = hoje</code>. <strong>A meta é mantida.</strong>
+3. Chamar isso no <code>onCreate</code> <strong>e no <code>onResume</code></strong> (cobre o caso de o app ficar aberto/em segundo plano passando da meia-noite).</p>
+<h3>4.3 Alerta de ultrapassagem — como garantir que é "real"</h3>
+<ul>
+<li>Uma única fonte da verdade: <code>ConsumoStorage</code> (meta + acumulado).</li>
+<li>Um único método na <code>MainActivity</code>, <code>atualizarTela()</code>, que <strong>sempre</strong> relê os valores do storage e atualiza <strong>tudo</strong>: componente, mensagem de status, lista, texto da meta. É chamado ao abrir, após registrar, após alterar a meta e no <code>onResume</code>.</li>
+<li><code>acimaDaMeta = acumulado &gt; meta</code> calculado ali, nunca guardado como flag solta. Alterar a meta para um valor maior → <code>atualizarTela()</code> recalcula → alerta some automaticamente.</li>
+<li>Consistência: mensagem "Meta ultrapassada!" na tela <strong>e</strong> cor/legenda no componente, ambos vindos do mesmo cálculo.</li>
+</ul>
+<h2>5. Plano passo a passo (tudo do zero)</h2>
+<p>O trabalho está dividido em <strong>7 etapas</strong>. Cada uma tem uma <strong>entrega concreta</strong>: algo que dá para abrir no emulador e ver funcionando (ou, na etapa de dados, algo que dá para provar com um teste). Só passamos para a próxima quando a anterior estiver "pronta quando…".</p>
+<h3>Visão geral: o que sai de cada etapa</h3>
+<table>
+<thead>
+<tr>
+<th>Etapa</th>
+<th>O que fica pronto</th>
+<th>O que dá para ver / provar</th>
+<th>Tempo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Base do projeto</td>
+<td>Projeto limpo, cores, textos e tema do protótipo</td>
+<td>App abre com fundo azul-claro e cabeçalho azul "Meu consumo de água"</td>
+<td>≈ 2,5 h</td>
+</tr>
+<tr>
+<td>2. Copo desenhado</td>
+<td><code>WaterProgressView</code> desenhando título, copo, água e texto</td>
+<td>Um copo 75% cheio com "75% da meta"; mudar o XML muda cor, meta e tamanho</td>
+<td>≈ 4 h</td>
+</tr>
+<tr>
+<td>3. Copo "vivo"</td>
+<td>Animação, alerta de ultrapassagem e alternância ao toque</td>
+<td>Botões provisórios +500/−500 ml: a água sobe e desce suave; passa de 100% e fica azul-escuro; tocar alterna % ↔ ml</td>
+<td>≈ 4 h</td>
+</tr>
+<tr>
+<td>4. Dados que sobrevivem</td>
+<td>Classes de modelo e armazenamento (meta, registros, acumulado, novo dia)</td>
+<td>Gravar registros, fechar o app, reabrir: os valores voltam; trocar a data limpa os registros</td>
+<td>≈ 3,5 h</td>
+</tr>
+<tr>
+<td>5. Tela final (visual)</td>
+<td>Layout completo igual ao protótipo, com dados de exemplo</td>
+<td>Tela idêntica às capturas, mas ainda sem funcionar</td>
+<td>≈ 4 h</td>
+</tr>
+<tr>
+<td>6. Tudo ligado</td>
+<td><code>MainActivity</code> conectando tela, componente e dados</td>
+<td><strong>App completo funcionando</strong>: registrar, alterar meta, alerta, persistência</td>
+<td>≈ 4 h</td>
+</tr>
+<tr>
+<td>7. Acabamento e defesa</td>
+<td>Código comentado, README e ensaio</td>
+<td>App sem erros, README com a justificativa da persistência, dupla pronta para explicar tudo</td>
+<td>≈ 5 h</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>As etapas 2–3 (componente) e 4 (dados) não dependem uma da outra e podem ser feitas em paralelo. A etapa 5 só precisa da 2. A etapa 6 junta tudo.</p>
+</blockquote>
+<hr />
+<h3>Etapa 1 — Base do projeto</h3>
+<p><strong>Entrega:</strong> o esqueleto limpo, com a identidade visual do protótipo.</p>
+<p><strong>O que você vai ver no celular:</strong> tela com fundo azul-claro e uma faixa azul no topo com o texto "Meu consumo de água" em branco. Nada mais.</p>
+<p><strong>Arquivos criados ou alterados</strong>
+- <code>res/values/colors.xml</code> — paleta da seção 3.2.
+- <code>res/values/strings.xml</code> — todos os textos do app (título, botões, hints, mensagens de status e de erro, "Registros de hoje"…).
+- <code>res/values/themes.xml</code> e <code>values-night/themes.xml</code> — tema claro (<code>Theme.Material3.Light.NoActionBar</code>).
+- <code>res/layout/activity_main.xml</code> — remove o "Hello World!" e deixa só o cabeçalho.
+- <code>MainActivity.java</code> — passa a tratar as bordas do sistema (<code>EdgeToEdge.enable</code> + <em>insets</em>), porque com <code>targetSdk 37</code> o app desenha sob a barra de status.
+- Pastas (pacotes) <code>model</code> e <code>widget</code>, vazias por enquanto.</p>
+<p><strong>Pronto quando</strong>
+- o app compila e abre no emulador/celular (Android 13+);
+- o cabeçalho não fica escondido atrás da barra de status;
+- não há nenhum texto escrito direto nos layouts (tudo em <code>strings.xml</code>).</p>
+<hr />
+<h3>Etapa 2 — Copo desenhado (<code>WaterProgressView</code> estática)</h3>
+<p><strong>Entrega:</strong> a View customizada desenhando tudo na tela, ainda sem animação nem dados reais.</p>
+<p><strong>O que você vai ver no celular:</strong> o título "Consumo diário de água", um copo trapezoidal com contorno azul-marinho, água azul preenchendo 75% da altura, e o texto "75% da meta" abaixo. Se mudarmos <code>app:maxValue</code>, <code>app:progressColor</code>, <code>app:textColor</code> ou o tamanho (<code>200dp</code>, <code>150dp</code>…) no XML, o desenho muda de acordo.</p>
+<pre><code> Consumo diário de água
+        ┌──────────┐
+        │          │
+        │▒▒▒▒▒▒▒▒▒▒│   &lt;- água (75%)
+        │▒▒▒▒▒▒▒▒▒▒│
+         └────────┘
+        75% da meta
+</code></pre>
+<p><strong>Arquivos criados ou alterados</strong>
+- <code>widget/WaterProgressView.java</code> (novo) — classe que estende <code>View</code>, lê os atributos do XML (<code>TypedArray</code>), calcula a geometria em <code>onSizeChanged</code> e desenha em <code>onDraw</code>: título → copo recortado com <code>clipPath</code> e preenchido com a água → contorno → texto.
+- <code>res/values/attrs.xml</code> (novo) — <code>progressColor</code>, <code>textColor</code>, <code>maxValue</code> (+ <code>overColor</code> e <code>title</code> opcionais).
+- Um layout provisório de teste usando o componente com <code>200dp x 200dp</code>.</p>
+<p><strong>Pronto quando</strong>
+- o componente aparece com <code>wrap_content</code> e com tamanhos fixos, sem cortar o desenho;
+- valores fixos de 0%, 50%, 100% e 150% desenham corretamente o nível da água (acima de 100% o copo fica cheio, sem a água "vazar" para fora);
+- os atributos do XML realmente alteram cores e meta.</p>
+<hr />
+<h3>Etapa 3 — Copo "vivo": animação, alerta e toque</h3>
+<p><strong>Entrega:</strong> o comportamento completo do componente, ainda controlado por botões provisórios.</p>
+<p><strong>O que você vai ver no celular:</strong> a tela de teste tem dois botões "+500 ml" e "−500 ml". Ao apertar, a água <strong>sobe ou desce suavemente</strong> (cerca de meio segundo) e o texto muda. Ao passar de 100%, o copo fica cheio, a água muda para azul-escuro, aparecem brilhos ao redor e a legenda <strong>"Meta ultrapassada!"</strong>. Ao tocar no copo, o texto alterna entre <code>125% da meta</code> e <code>2500 / 2000 ml</code>, mantendo o valor.</p>
+<p><strong>Arquivos alterados</strong>
+- <code>widget/WaterProgressView.java</code> — ganha a API pública: <code>setMaxValue(int ml)</code>, <code>setConsumo(int ml)</code>, <strong><code>setProgress(int percentual)</code></strong> (exigido pela avaliação, aceita valores acima de 100), animação com <code>ValueAnimator</code> + <code>invalidate()</code>, regra "acima da meta" (<code>consumo &gt; meta</code>, em ml), brilhos e legenda, alternância de modo no clique.
+- Layout provisório de teste com os botões "+500/−500".</p>
+<p><strong>Pronto quando</strong>
+- a transição é animada, sem "pulos", mesmo com cliques rápidos seguidos;
+- 100% exato mostra brilhos mas <strong>sem</strong> alerta; 2001/2000 ml já mostra o alerta;
+- diminuir o consumo (ou aumentar a meta) faz o alerta desaparecer;
+- a alternância funciona abaixo, em e acima de 100%.</p>
+<hr />
+<h3>Etapa 4 — Dados que sobrevivem (persistência)</h3>
+<p><strong>Entrega:</strong> as classes que guardam e recuperam tudo, incluindo a regra do dia.</p>
+<p><strong>O que dá para provar:</strong> uma tela provisória (ou testes JUnit) que grava meta e alguns registros, <strong>fecha o app e, ao reabrir, mostra os mesmos valores</strong>. Ao mudar a data do sistema para o dia seguinte, os registros somem e a meta continua.</p>
+<p><strong>Arquivos criados</strong>
+- <code>model/RegistroConsumo.java</code> — um registro: volume em ml e instante (horário em milissegundos).
+- <code>model/ConsumoStorage.java</code> — usa <code>SharedPreferences</code> (arquivo <code>"ConsumoAgua"</code>) com as chaves <code>meta_ml</code>, <code>data_dia</code>, <code>registros</code> e <code>acumulado_ml</code> (seção 4.2). Métodos: ler/gravar meta, adicionar registro, listar registros, calcular acumulado e <code>verificarNovoDia()</code>.</p>
+<p><strong>Pronto quando</strong>
+- meta, registros (volume + horário) e acumulado voltam idênticos após fechar e reabrir;
+- registros de um dia anterior são descartados e a meta é mantida;
+- dados vazios ou corrompidos não derrubam o app (retorna lista vazia).</p>
+<hr />
+<h3>Etapa 5 — Tela final (somente visual)</h3>
+<p><strong>Entrega:</strong> o layout completo, igual ao protótipo, preenchido com dados de exemplo.</p>
+<p><strong>O que você vai ver no celular:</strong> a tela das capturas da seção 3, de cima para baixo: cabeçalho azul → mensagem de status → <code>WaterProgressView</code> → faixa cinza "Meta: 2000 ml · ALTERAR META" → campo "Quantidade (ml)" + botão REGISTRAR → "Registros de hoje" com linhas como <code>08:10 — 500 ml</code>. Os botões ainda não fazem nada.</p>
+<pre><code>┌─────────────────────────────┐
+│ Meu consumo de água         │  &lt;- cabeçalho azul
+├─────────────────────────────┤
+│   Meta ultrapassada!        │  &lt;- status
+│        (copo)               │
+│   2500 / 2000 ml            │
+│ Meta: 2000 ml  ALTERAR META │
+│ [Quantidade (ml)] REGISTRAR │
+│ Registros de hoje           │
+│ 09:00               1000 ml │
+│ 13:00                800 ml │
+└─────────────────────────────┘
+</code></pre>
+<p><strong>Arquivos criados ou alterados</strong>
+- <code>res/layout/activity_main.xml</code> — tela completa com <code>ConstraintLayout</code> na raiz (cada item preso ao anterior e às bordas); a lista de registros fica dentro de um <code>ScrollView</code>.
+- <code>res/layout/item_registro.xml</code> — uma linha da lista (horário à esquerda, volume à direita).
+- <code>res/drawable/*.xml</code> — fundos arredondados dos campos e da faixa da meta.</p>
+<p><strong>Pronto quando</strong>
+- a tela é visualmente parecida com as quatro capturas do protótipo;
+- não há textos cortados nem barras de rolagem horizontais;
+- a faixa da meta tem os dois estados prontos (leitura e edição), alternáveis por visibilidade.</p>
+<hr />
+<h3>Etapa 6 — Tudo ligado (app funcionando)</h3>
+<p><strong>Entrega:</strong> o aplicativo completo, cumprindo todos os requisitos da avaliação.</p>
+<p><strong>O que você vai ver no celular:</strong> digitar um volume e tocar em REGISTRAR faz a água subir, a linha aparecer na lista com o horário atual e o acumulado atualizar. Passar da meta acende o alerta na mensagem de status e no copo. Alterar a meta preserva os registros e recalcula tudo (o alerta some se deixar de valer). Fechar e reabrir mantém tudo.</p>
+<p><strong>Arquivos alterados</strong>
+- <code>MainActivity.java</code> — liga as views, o componente e o <code>ConsumoStorage</code>. Um único método <strong><code>atualizarTela()</code></strong> relê os dados salvos e atualiza componente, mensagem de status, texto da meta e lista; é chamado ao abrir, ao registrar, ao alterar a meta e no <code>onResume</code> (junto com <code>verificarNovoDia()</code>).
+- Validações com <code>Toast</code>: volume vazio, zero, não numérico ou absurdo (&gt; 5000 ml); meta inválida (≤ 0 ou &gt; 20000).
+- Remoção da tela e dos botões provisórios das etapas anteriores.</p>
+<p><strong>Pronto quando</strong>
+- todos os 12 cenários do roteiro da seção 6 passam;
+- o app não fecha com nenhuma entrada inválida.</p>
+<hr />
+<h3>Etapa 7 — Acabamento e defesa oral</h3>
+<p><strong>Entrega:</strong> um código que dá para explicar e um repositório pronto para entregar.</p>
+<p><strong>O que fica pronto</strong>
+- comentários pertinentes nas partes difíceis (<code>onDraw</code>, <code>clipPath</code>, animação, regra de novo dia) e nomes claros e consistentes;
+- giro de tela testado (sem erro, dados preservados);
+- <code>README.md</code> com descrição do app, como executar e a <strong>justificativa da escolha de persistência</strong> (exigida no enunciado);
+- ensaio da defesa, com as duas explicando qualquer parte do código.</p>
+<p><strong>Perguntas prováveis na defesa</strong>
+- Por que estender <code>View</code> e não compor XML? O que são <code>onDraw</code>, <code>Canvas</code> e <code>Paint</code>?
+- Para que servem <code>attrs.xml</code>, <code>TypedArray</code> e <code>recycle()</code>?
+- Como o <code>setProgress</code> redesenha? O que faz o <code>invalidate()</code>? Como funciona a animação?
+- Por que <code>clipPath</code>? Como valores acima de 100% são tratados?
+- Por que <code>SharedPreferences</code>? Como a lista é gravada? Como o novo dia é detectado e o que é mantido?
+- Como o alerta desliga ao alterar a meta? O que acontece com entradas inválidas?</p>
+<p><strong>Pronto quando:</strong> cada uma consegue explicar, sem consultar, o fluxo "registrar → gravar → atualizar tela → redesenhar o copo".</p>
+<h2>6. Roteiro de testes (checklist final)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Cenário</th>
+<th>Resultado esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Primeira abertura</td>
+<td>Meta 2000, 0%, copo vazio, mensagem vermelha "VOCÊ PRECISA BEBER ÁGUA D:&lt;", "Nenhum registro ainda."</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Registrar 500 ml</td>
+<td>25%, lista com horário atual e 500 ml, animação suave</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Registrar até 2000 ml exatos</td>
+<td>100%, brilhos, mensagem verde "Meta batida!", sem alerta de ultrapassagem</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Registrar +500 ml (2500)</td>
+<td>125%, copo cheio azul escuro, "Meta ultrapassada!" na tela <strong>e</strong> no componente</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Tocar no copo</td>
+<td>Alterna <code>125% da meta</code> ↔ <code>2500 / 2000 ml</code>; funciona também acima da meta</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Alterar meta para 3000</td>
+<td>Registros mantidos, ~83%, <strong>alerta some</strong></td>
+</tr>
+<tr>
+<td>7</td>
+<td>Alterar meta para 1000</td>
+<td>Alerta volta (250%)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Fechar totalmente o app e reabrir</td>
+<td>Meta, registros e acumulado idênticos</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Mudar a data do sistema para o dia seguinte e reabrir (ou voltar ao app)</td>
+<td>Registros apagados, 0%, meta mantida</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Entradas inválidas (vazio, 0, negativo, texto, número enorme)</td>
+<td><code>Toast</code> de erro, nada gravado, app não fecha</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Componente em outro layout com 150dp e cor diferente</td>
+<td>Renderiza proporcional, sem cortar</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Girar a tela</td>
+<td>Sem crash; dados preservados</td>
+</tr>
+</tbody>
+</table>
+<h2>7. Cronograma sugerido (hoje: 08/10 → entrega: 15/10)</h2>
+<table>
+<thead>
+<tr>
+<th>Dia</th>
+<th>Atividade</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qui 08/10</td>
+<td>Etapa 1 (base do projeto)</td>
+</tr>
+<tr>
+<td>Sex 09/10</td>
+<td>Etapa 2 (copo desenhado)</td>
+</tr>
+<tr>
+<td>Sáb 10/10</td>
+<td>Etapa 3 (copo "vivo")</td>
+</tr>
+<tr>
+<td>Dom 11/10</td>
+<td>Etapa 4 (dados que sobrevivem)</td>
+</tr>
+<tr>
+<td>Seg 12/10</td>
+<td>Etapa 5 (tela final)</td>
+</tr>
+<tr>
+<td>Ter 13/10</td>
+<td>Etapa 6 (tudo ligado) e testes</td>
+</tr>
+<tr>
+<td>Qua 14/10</td>
+<td>Etapa 7 (acabamento, README, ensaio): dia de folga para imprevistos</td>
+</tr>
+<tr>
+<td>Qui 15/10</td>
+<td><strong>Entrega e defesa</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Divisão sugerida: uma pessoa nas Etapas 2–3 (componente) e a outra nas Etapas 4–5 (dados e layout); a Etapa 6 em dupla, já que é onde as partes se encontram.</p></body></html>
