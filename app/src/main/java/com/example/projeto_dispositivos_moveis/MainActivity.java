@@ -6,6 +6,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,14 +16,20 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.projeto_dispositivos_moveis.model.ConsumoStorage;
+import com.example.projeto_dispositivos_moveis.model.RegistroConsumo;
 import com.example.projeto_dispositivos_moveis.widget.WaterProgressView;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int SAMPLE_STEP_ML = 500;
-    private static final int SAMPLE_SMALL_GOAL_ML = 1000;
-    private static final int SAMPLE_DEFAULT_GOAL_ML = 2000;
-    private static final int PROVISIONAL_CONSUMPTION_ML = 2500;
+    private static final int MAX_VOLUME_ML = 5000;
+    private static final int MAX_GOAL_ML = 20000;
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
     private View header;
     private int headerBasePaddingTop;
@@ -36,7 +43,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView alterGoalButton;
     private EditText goalField;
     private Button saveGoalButton;
-    private int sampleConsumptionMl;
+    private EditText volumeField;
+    private Button registerButton;
+
+    private ConsumoStorage storage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +55,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         bindViews();
         configureSystemBars();
-        bindSampleControls();
-        bindProvisionalPreview();
+        storage = new ConsumoStorage(this);
         bindActions();
+        storage.checkNewDay();
+        atualizarTela();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        storage.checkNewDay();
+        atualizarTela();
     }
 
     private void bindViews() {
@@ -63,36 +81,8 @@ public class MainActivity extends AppCompatActivity {
         alterGoalButton = findViewById(R.id.botao_alterar_meta);
         goalField = findViewById(R.id.campo_meta);
         saveGoalButton = findViewById(R.id.botao_salvar_meta);
-    }
-
-    private void bindActions() {
-        alterGoalButton.setOnClickListener(view -> entrarModoEdicaoMeta());
-        saveGoalButton.setOnClickListener(view -> salvarMetaProvisoria());
-    }
-
-    private void entrarModoEdicaoMeta() {
-        goalField.setText(String.valueOf(waterView.getMaxValue()));
-        metaReadGroup.setVisibility(View.GONE);
-        metaEditGroup.setVisibility(View.VISIBLE);
-        goalField.requestFocus();
-    }
-
-    private void sairModoEdicaoMeta() {
-        metaEditGroup.setVisibility(View.GONE);
-        metaReadGroup.setVisibility(View.VISIBLE);
-    }
-
-    private void salvarMetaProvisoria() {
-        try {
-            int goal = Integer.parseInt(goalField.getText().toString().trim());
-            if (goal > 0) {
-                waterView.setMaxValue(goal);
-                updateMetaText();
-                updateStatus();
-            }
-        } catch (NumberFormatException ignored) {
-        }
-        sairModoEdicaoMeta();
+        volumeField = findViewById(R.id.campo_quantidade);
+        registerButton = findViewById(R.id.botao_registrar);
     }
 
     private void configureSystemBars() {
@@ -109,50 +99,35 @@ public class MainActivity extends AppCompatActivity {
         return WindowInsetsCompat.CONSUMED;
     }
 
-    private void bindSampleControls() {
-        findViewById(R.id.botao_menos).setOnClickListener(view -> changeConsumption(-SAMPLE_STEP_ML));
-        findViewById(R.id.botao_mais).setOnClickListener(view -> changeConsumption(SAMPLE_STEP_ML));
-        findViewById(R.id.botao_meta_pequena).setOnClickListener(view -> changeGoal(SAMPLE_SMALL_GOAL_ML));
-        findViewById(R.id.botao_meta_padrao).setOnClickListener(view -> changeGoal(SAMPLE_DEFAULT_GOAL_ML));
+    private void bindActions() {
+        alterGoalButton.setOnClickListener(view -> entrarModoEdicaoMeta());
+        saveGoalButton.setOnClickListener(view -> salvarMeta());
+        registerButton.setOnClickListener(view -> registrarConsumo());
     }
 
-    private void bindProvisionalPreview() {
-        sampleConsumptionMl = PROVISIONAL_CONSUMPTION_ML;
-        waterView.setMaxValue(SAMPLE_DEFAULT_GOAL_ML);
-        waterView.setConsumption(sampleConsumptionMl);
-        updateMetaText();
-        updateStatus();
+    private void atualizarTela() {
+        int goal = storage.getGoal();
+        int accumulated = storage.getAccumulated();
+        List<RegistroConsumo> records = storage.getRecords();
 
-        addRecordRow("08:10", 1000);
-        addRecordRow("13:00", 800);
-        addRecordRow("18:30", 700);
-        emptyView.setVisibility(View.GONE);
+        waterView.setMaxValue(goal);
+        waterView.setConsumption(accumulated);
+        metaView.setText(getString(R.string.meta_label, goal));
+        sairModoEdicaoMeta();
+        atualizarStatus(accumulated, goal);
+        renderRecords(records);
     }
 
-    private void addRecordRow(String time, int volumeMl) {
-        View row = getLayoutInflater().inflate(R.layout.item_registro, recordsList, false);
-        TextView timeView = row.findViewById(R.id.item_hora);
-        TextView volumeView = row.findViewById(R.id.item_volume);
-        timeView.setText(time);
-        volumeView.setText(getString(R.string.registro_volume, volumeMl));
-        recordsList.addView(row);
-    }
-
-    private void updateMetaText() {
-        metaView.setText(getString(R.string.meta_label, waterView.getMaxValue()));
-    }
-
-    private void updateStatus() {
-        int goal = waterView.getMaxValue();
-        if (sampleConsumptionMl == 0) {
+    private void atualizarStatus(int accumulated, int goal) {
+        if (accumulated == 0) {
             statusView.setText(R.string.status_sem_consumo);
             statusView.setTextColor(ContextCompat.getColor(this, R.color.alert));
             statusView.setVisibility(View.VISIBLE);
-        } else if (sampleConsumptionMl > goal) {
+        } else if (accumulated > goal) {
             statusView.setText(R.string.status_meta_ultrapassada);
             statusView.setTextColor(ContextCompat.getColor(this, R.color.water_over));
             statusView.setVisibility(View.VISIBLE);
-        } else if (sampleConsumptionMl == goal) {
+        } else if (accumulated == goal) {
             statusView.setText(R.string.status_meta_batida);
             statusView.setTextColor(ContextCompat.getColor(this, R.color.success));
             statusView.setVisibility(View.VISIBLE);
@@ -161,15 +136,93 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void changeConsumption(int deltaMl) {
-        sampleConsumptionMl = Math.max(0, sampleConsumptionMl + deltaMl);
-        waterView.setConsumption(sampleConsumptionMl);
-        updateStatus();
+    private void renderRecords(List<RegistroConsumo> records) {
+        recordsList.removeAllViews();
+        if (records.isEmpty()) {
+            emptyView.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        emptyView.setVisibility(View.GONE);
+        for (RegistroConsumo record : records) {
+            addRecordRow(record);
+        }
     }
 
-    private void changeGoal(int goalMl) {
-        waterView.setMaxValue(goalMl);
-        updateMetaText();
-        updateStatus();
+    private void addRecordRow(RegistroConsumo record) {
+        View row = getLayoutInflater().inflate(R.layout.item_registro, recordsList, false);
+        TextView timeView = row.findViewById(R.id.item_hora);
+        TextView volumeView = row.findViewById(R.id.item_volume);
+        timeView.setText(formatTime(record.getInstantMillis()));
+        volumeView.setText(getString(R.string.registro_volume, record.getVolumeMl()));
+        recordsList.addView(row);
+    }
+
+    private String formatTime(long instantMillis) {
+        return Instant.ofEpochMilli(instantMillis)
+                .atZone(ZoneId.systemDefault())
+                .toLocalTime()
+                .format(TIME_FORMAT);
+    }
+
+    private void registrarConsumo() {
+        Integer volume = parsePositiveValue(volumeField);
+        if (volume == null) {
+            showToast(getString(R.string.erro_volume_invalido));
+            return;
+        }
+        if (volume > MAX_VOLUME_ML) {
+            showToast(getString(R.string.erro_volume_maximo, MAX_VOLUME_ML));
+            return;
+        }
+
+        storage.addRecord(volume, System.currentTimeMillis());
+        volumeField.setText("");
+        atualizarTela();
+    }
+
+    private void salvarMeta() {
+        Integer goal = parsePositiveValue(goalField);
+        if (goal == null) {
+            showToast(getString(R.string.erro_meta_invalida));
+            return;
+        }
+        if (goal > MAX_GOAL_ML) {
+            showToast(getString(R.string.erro_meta_maxima, MAX_GOAL_ML));
+            return;
+        }
+
+        storage.setGoal(goal);
+        sairModoEdicaoMeta();
+        atualizarTela();
+    }
+
+    private Integer parsePositiveValue(EditText field) {
+        String text = field.getText().toString().trim();
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            int value = Integer.parseInt(text);
+            return value > 0 ? value : null;
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    private void entrarModoEdicaoMeta() {
+        goalField.setText(String.valueOf(storage.getGoal()));
+        metaReadGroup.setVisibility(View.GONE);
+        metaEditGroup.setVisibility(View.VISIBLE);
+        goalField.requestFocus();
+    }
+
+    private void sairModoEdicaoMeta() {
+        metaEditGroup.setVisibility(View.GONE);
+        metaReadGroup.setVisibility(View.VISIBLE);
     }
 }
