@@ -10,6 +10,7 @@ final class GlassGeometry {
 
     private static final float MARGIN_DP = 8f;
     private static final float TEXT_DESCENT_RATIO = 0.25f;
+    private static final float TITLE_SIZE_RATIO = 0.08f;
     private static final float CAPTION_SIZE_RATIO = 0.075f;
     private static final float LABEL_SIZE_RATIO = 0.11f;
     private static final float CAPTION_GAP_RATIO = 1.3f;
@@ -33,6 +34,8 @@ final class GlassGeometry {
     private int width;
     private int height;
     private float centerX;
+    private float titleSize;
+    private float titleBaseline;
     private float captionSize;
     private float labelSize;
     private float labelBaseline;
@@ -58,15 +61,18 @@ final class GlassGeometry {
 
     private void computeTextBands() {
         float margin = margin();
-        captionSize = Math.min(height, width) * CAPTION_SIZE_RATIO;
-        labelSize = Math.min(height, width) * LABEL_SIZE_RATIO;
+        float minSide = Math.min(height, width);
+        titleSize = minSide * TITLE_SIZE_RATIO;
+        titleBaseline = margin + titleSize;
+        captionSize = minSide * CAPTION_SIZE_RATIO;
+        labelSize = minSide * LABEL_SIZE_RATIO;
         captionBaseline = height - margin - captionSize * TEXT_DESCENT_RATIO;
         labelBaseline = captionBaseline - captionSize * CAPTION_GAP_RATIO - labelSize * TEXT_DESCENT_RATIO;
     }
 
     private void computeGlass() {
         float margin = margin();
-        float availableTop = margin * 2f;
+        float availableTop = titleBaseline + margin;
         float availableBottom = labelBaseline - labelSize - margin;
         float availableHeight = Math.max(availableBottom - availableTop, 1f);
 
@@ -129,6 +135,14 @@ final class GlassGeometry {
 
     float getCenterX() {
         return centerX;
+    }
+
+    float getTitleSize() {
+        return titleSize;
+    }
+
+    float getTitleBaseline() {
+        return titleBaseline;
     }
 
     float getCaptionSize() {

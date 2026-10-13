@@ -18,6 +18,7 @@ final class WaterProgressPainter {
     private final Paint surfacePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint outlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint sparklePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint titlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint alertPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -27,6 +28,7 @@ final class WaterProgressPainter {
         configureFillPaint(sparklePaint);
         configureSurfacePaint();
         configureOutlinePaint();
+        configureTextPaint(titlePaint);
         configureTextPaint(labelPaint);
         configureTextPaint(alertPaint);
     }
@@ -53,11 +55,18 @@ final class WaterProgressPainter {
 
     void draw(Canvas canvas, GlassGeometry geometry, WaterProgressFrame frame) {
         int waterColor = waterColor(frame);
+        drawTitle(canvas, geometry, frame);
         drawWater(canvas, geometry, frame, waterColor);
         drawOutline(canvas, geometry);
         drawSparkles(canvas, geometry, frame, waterColor);
         drawLabel(canvas, geometry, frame);
         drawAlert(canvas, geometry, frame);
+    }
+
+    private void drawTitle(Canvas canvas, GlassGeometry geometry, WaterProgressFrame frame) {
+        titlePaint.setColor(attributes.getTextColor());
+        drawCenteredText(canvas, geometry, titlePaint, frame.getTitle(),
+                geometry.getTitleSize(), geometry.getTitleBaseline());
     }
 
     private int waterColor(WaterProgressFrame frame) {

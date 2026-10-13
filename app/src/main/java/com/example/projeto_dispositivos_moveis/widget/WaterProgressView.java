@@ -18,6 +18,7 @@ public class WaterProgressView extends View {
     private final WaterProgressState state;
     private final WaterProgressLabels labels;
     private final PercentAnimator animator;
+    private final String title;
 
     private boolean absoluteMode;
 
@@ -33,6 +34,7 @@ public class WaterProgressView extends View {
         state = new WaterProgressState(attributes.getMaxValue());
         labels = new WaterProgressLabels(context);
         animator = new PercentAnimator(this::invalidate);
+        title = attributes.getTitle();
         setOnClickListener(view -> toggleDisplayMode());
     }
 
@@ -60,6 +62,15 @@ public class WaterProgressView extends View {
 
     public boolean isAbsoluteMode() {
         return absoluteMode;
+    }
+
+    public void setModoAbsoluto(boolean absolute) {
+        absoluteMode = absolute;
+        invalidate();
+    }
+
+    public boolean isAcimaDaMeta() {
+        return state.isOverGoal();
     }
 
     private void toggleDisplayMode() {
@@ -100,6 +111,7 @@ public class WaterProgressView extends View {
         float displayedPercent = animator.getCurrent();
         return new WaterProgressFrame(
                 displayedPercent,
+                title,
                 buildLabel(displayedPercent),
                 labels.overGoalAlert(),
                 state.isOverGoal(),

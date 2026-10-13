@@ -2,6 +2,7 @@
     <string name="app_name">Meu consumo de água</string>
 
     <string name="titulo_cabecalho">Meu consumo de água</string>
+    <string name="titulo_consumo">Consumo diário de água</string>
     <string name="registros_titulo">Registros de hoje</string>
     <string name="registros_vazio">Nenhum registro ainda.</string>
 

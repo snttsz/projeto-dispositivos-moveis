@@ -6,5 +6,6 @@
         <attr name="outlineColor" format="color" />
         <attr name="maxValue" format="integer" />
         <attr name="overColor" format="color" />
+        <attr name="title" format="string" />
     </declare-styleable>
 </resources>
