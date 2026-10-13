@@ -1,6 +1,6 @@
 package com.example.projeto_dispositivos_moveis.widget;
 
-final class WaterProgressState {
+final class WaterProgressState {  //regras do consumo da agua em relaçao a meta, porcentagem, mls consumidos...
 
     private static final float PERCENT_FACTOR = 100f;
 

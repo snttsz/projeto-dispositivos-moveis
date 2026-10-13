@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class GlassGeometry {
+final class GlassGeometry { //desenho da view, td parte de geometria do copo e elementos secundarios
 
     private static final float MARGIN_DP = 8f;
     private static final float TEXT_DESCENT_RATIO = 0.25f;

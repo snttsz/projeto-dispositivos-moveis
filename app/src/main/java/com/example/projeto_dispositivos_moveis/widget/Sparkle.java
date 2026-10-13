@@ -1,6 +1,6 @@
 package com.example.projeto_dispositivos_moveis.widget;
 
-final class Sparkle {
+final class Sparkle { //elemento pra quando a meta bater >= 100%
 
     private final float x;
     private final float y;

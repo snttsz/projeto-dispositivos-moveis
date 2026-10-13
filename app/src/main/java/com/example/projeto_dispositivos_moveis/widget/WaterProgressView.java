@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 public class WaterProgressView extends View {
+    //centralizaçao do componente do WaterProgress
 
     private static final float DEFAULT_WIDTH_DP = 200f;
     private static final float DEFAULT_HEIGHT_DP = 240f;

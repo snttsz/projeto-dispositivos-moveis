@@ -9,7 +9,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.projeto_dispositivos_moveis.R;
 
-final class WaterProgressAttributes {
+final class WaterProgressAttributes {  //attrs xml
 
     static final int DEFAULT_MAX_VALUE = 2000;
 

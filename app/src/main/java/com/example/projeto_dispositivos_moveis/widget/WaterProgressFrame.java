@@ -1,6 +1,6 @@
 package com.example.projeto_dispositivos_moveis.widget;
 
-final class WaterProgressFrame {
+final class WaterProgressFrame {  //agrupa informações para desenhar em um determinado momento
 
     private final float displayedPercent;
     private final String title;

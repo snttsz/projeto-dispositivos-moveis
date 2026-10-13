@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.example.projeto_dispositivos_moveis.R;
 
-final class WaterProgressLabels {
+final class WaterProgressLabels { //mais para formataçao de texto
 
     private final Context context;
 
