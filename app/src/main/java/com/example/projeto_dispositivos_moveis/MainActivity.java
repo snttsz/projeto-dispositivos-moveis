@@ -2,6 +2,8 @@ package com.example.projeto_dispositivos_moveis;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -29,6 +31,11 @@ public class MainActivity extends AppCompatActivity {
     private TextView metaView;
     private LinearLayout recordsList;
     private TextView emptyView;
+    private LinearLayout metaReadGroup;
+    private LinearLayout metaEditGroup;
+    private TextView alterGoalButton;
+    private EditText goalField;
+    private Button saveGoalButton;
     private int sampleConsumptionMl;
 
     @Override
@@ -40,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         configureSystemBars();
         bindSampleControls();
         bindProvisionalPreview();
+        bindActions();
     }
 
     private void bindViews() {
@@ -50,6 +58,41 @@ public class MainActivity extends AppCompatActivity {
         metaView = findViewById(R.id.meta_texto);
         recordsList = findViewById(R.id.lista_registros);
         emptyView = findViewById(R.id.lista_vazia);
+        metaReadGroup = findViewById(R.id.meta_leitura);
+        metaEditGroup = findViewById(R.id.meta_edicao);
+        alterGoalButton = findViewById(R.id.botao_alterar_meta);
+        goalField = findViewById(R.id.campo_meta);
+        saveGoalButton = findViewById(R.id.botao_salvar_meta);
+    }
+
+    private void bindActions() {
+        alterGoalButton.setOnClickListener(view -> entrarModoEdicaoMeta());
+        saveGoalButton.setOnClickListener(view -> salvarMetaProvisoria());
+    }
+
+    private void entrarModoEdicaoMeta() {
+        goalField.setText(String.valueOf(waterView.getMaxValue()));
+        metaReadGroup.setVisibility(View.GONE);
+        metaEditGroup.setVisibility(View.VISIBLE);
+        goalField.requestFocus();
+    }
+
+    private void sairModoEdicaoMeta() {
+        metaEditGroup.setVisibility(View.GONE);
+        metaReadGroup.setVisibility(View.VISIBLE);
+    }
+
+    private void salvarMetaProvisoria() {
+        try {
+            int goal = Integer.parseInt(goalField.getText().toString().trim());
+            if (goal > 0) {
+                waterView.setMaxValue(goal);
+                updateMetaText();
+                updateStatus();
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        sairModoEdicaoMeta();
     }
 
     private void configureSystemBars() {
