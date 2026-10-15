@@ -1,11 +1,13 @@
 package com.example.projeto_dispositivos_moveis.widget;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,15 +18,18 @@ import com.example.projeto_dispositivos_moveis.R;
 public class WaterProgressView extends View {
 
     private static final int DEFAULT_MAX_VALUE = 2000;
+    private static final long ANIMATION_DURATION_MS = 600;
 
     private int maxValue = DEFAULT_MAX_VALUE;
     private int consumption;
+    private float displayedConsumption;
     private int progressColor;
     private int overColor;
     private int textColor;
     private int outlineColor;
     private String title;
     private boolean absoluteMode;
+    private ValueAnimator progressAnimator;
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -85,12 +90,11 @@ public class WaterProgressView extends View {
 
     public void setConsumption(int value) {
         consumption = Math.max(0, value);
-        invalidate();
+        animateProgress();
     }
 
     public void setProgress(int percent) {
-        consumption = Math.max(0, percent) * maxValue / 100;
-        invalidate();
+        setConsumption(Math.max(0, percent) * maxValue / 100);
     }
 
     public boolean isAbsoluteMode() {
@@ -104,6 +108,24 @@ public class WaterProgressView extends View {
 
     public boolean isAcimaDaMeta() {
         return consumption > maxValue;
+    }
+
+    private void animateProgress() {
+        if (progressAnimator != null) {
+            progressAnimator.cancel();
+        }
+
+        progressAnimator = ValueAnimator.ofFloat(displayedConsumption, consumption);
+        progressAnimator.setDuration(ANIMATION_DURATION_MS);
+        progressAnimator.setInterpolator(new DecelerateInterpolator());
+        progressAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animator) {
+                displayedConsumption = (float) animator.getAnimatedValue();
+                invalidate();
+            }
+        });
+        progressAnimator.start();
     }
 
     @Override
@@ -135,7 +157,7 @@ public class WaterProgressView extends View {
 
     private void drawWater(Canvas canvas, float left, float right, float top,
                            float bottom, float width) {
-        float percent = Math.min(100f, consumption * 100f / maxValue);
+        float percent = Math.min(100f, displayedConsumption * 100f / maxValue);
         float waterTop = bottom - (bottom - top) * percent / 100f;
         float bottomMargin = width * 0.05f;
 
@@ -170,7 +192,7 @@ public class WaterProgressView extends View {
     }
 
     private void drawStars(Canvas canvas, float width, float height) {
-        if (consumption < maxValue) {
+        if (displayedConsumption < maxValue) {
             return;
         }
 
@@ -186,10 +208,12 @@ public class WaterProgressView extends View {
     }
 
     private void drawValue(Canvas canvas, float width, float height) {
-        int percent = Math.round(consumption * 100f / maxValue);
+        int visibleConsumption = Math.round(displayedConsumption);
+        int percent = Math.round(displayedConsumption * 100f / maxValue);
         String value;
         if (absoluteMode) {
-            value = getContext().getString(R.string.absoluto_meta, consumption, maxValue);
+            value = getContext().getString(
+                    R.string.absoluto_meta, visibleConsumption, maxValue);
         } else {
             value = getContext().getString(R.string.percentual_meta, percent);
         }
@@ -200,5 +224,13 @@ public class WaterProgressView extends View {
         paint.setTextSize(height * 0.08f);
         paint.setFakeBoldText(true);
         canvas.drawText(value, width / 2f, height * 0.91f, paint);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        if (progressAnimator != null) {
+            progressAnimator.cancel();
+        }
+        super.onDetachedFromWindow();
     }
 }
