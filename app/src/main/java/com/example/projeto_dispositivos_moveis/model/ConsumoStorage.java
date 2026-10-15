@@ -3,8 +3,8 @@ package com.example.projeto_dispositivos_moveis.model;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class ConsumoStorage { //gerencia leitura e escrita com o sharedPreferences
@@ -61,7 +61,10 @@ public class ConsumoStorage { //gerencia leitura e escrita com o sharedPreferenc
     }
 
     public void checkNewDay() {
-        String today = LocalDate.now().toString();
+        Calendar calendar = Calendar.getInstance();
+        String today = calendar.get(Calendar.YEAR) + "-"
+                + calendar.get(Calendar.MONTH) + "-"
+                + calendar.get(Calendar.DAY_OF_MONTH);
         if (today.equals(sharedPreferences.getString(KEY_DAY, ""))) {
             return;
         }

@@ -20,17 +20,14 @@ import com.example.projeto_dispositivos_moveis.model.ConsumoStorage;
 import com.example.projeto_dispositivos_moveis.model.RegistroConsumo;
 import com.example.projeto_dispositivos_moveis.widget.WaterProgressView;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int MAX_VOLUME_ML = 5000;
     private static final int MAX_GOAL_ML = 20000;
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
-
     private View header;
     private int headerBasePaddingTop;
     private WaterProgressView waterView;
@@ -88,7 +85,12 @@ public class MainActivity extends AppCompatActivity {
     private void configureSystemBars() {
         View root = findViewById(R.id.main);
         WindowCompat.getInsetsController(getWindow(), root).setAppearanceLightStatusBars(false);
-        ViewCompat.setOnApplyWindowInsetsListener(root, this::applySystemBarInsets);
+        ViewCompat.setOnApplyWindowInsetsListener(root, new androidx.core.view.OnApplyWindowInsetsListener() {
+            @Override
+            public WindowInsetsCompat onApplyWindowInsets(View view, WindowInsetsCompat windowInsets) {
+                return applySystemBarInsets(view, windowInsets);
+            }
+        });
     }
 
     private WindowInsetsCompat applySystemBarInsets(View root, WindowInsetsCompat windowInsets) {
@@ -100,9 +102,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void bindActions() {
-        alterGoalButton.setOnClickListener(view -> entrarModoEdicaoMeta());
-        saveGoalButton.setOnClickListener(view -> salvarMeta());
-        registerButton.setOnClickListener(view -> registrarConsumo());
+        alterGoalButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                entrarModoEdicaoMeta();
+            }
+        });
+        saveGoalButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                salvarMeta();
+            }
+        });
+        registerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                registrarConsumo();
+            }
+        });
     }
 
     private void atualizarTela() {
@@ -159,10 +176,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String formatTime(long instantMillis) {
-        return Instant.ofEpochMilli(instantMillis)
-                .atZone(ZoneId.systemDefault())
-                .toLocalTime()
-                .format(TIME_FORMAT);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(instantMillis);
+        return String.format(Locale.getDefault(), "%02d:%02d",
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE));
     }
 
     private void registrarConsumo() {

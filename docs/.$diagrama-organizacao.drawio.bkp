@@ -1,0 +1,75 @@
+<mxfile host="app.diagrams.net" modified="2026-10-15T00:00:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="organizacao-projeto" name="Organização do projeto">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="Organização do projeto — Meu consumo de água" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#082642;" vertex="1" parent="1">
+          <mxGeometry x="190" y="30" width="790" height="40" as="geometry" />
+        </mxCell>
+
+        <mxCell id="java-group" value="Código Java" style="swimlane;html=1;rounded=1;startSize=38;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="50" y="110" width="720" height="500" as="geometry" />
+        </mxCell>
+
+        <mxCell id="activity" value="&lt;b&gt;MainActivity.java&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Controla a tela, eventos e validações&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0077C8;fontColor=#ffffff;strokeColor=#005b99;fontSize=15;spacing=8;" vertex="1" parent="java-group">
+          <mxGeometry x="220" y="70" width="280" height="75" as="geometry" />
+        </mxCell>
+
+        <mxCell id="model-group" value="model" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=14;" vertex="1" parent="java-group">
+          <mxGeometry x="45" y="210" width="290" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="storage" value="&lt;b&gt;ConsumoStorage.java&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Salva e recupera dados com SharedPreferences&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;spacing=7;" vertex="1" parent="model-group">
+          <mxGeometry x="25" y="55" width="240" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="registro" value="&lt;b&gt;RegistroConsumo.java&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Representa horário e volume consumido&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;spacing=7;" vertex="1" parent="model-group">
+          <mxGeometry x="25" y="140" width="240" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="widget-group" value="widget" style="swimlane;html=1;rounded=1;startSize=30;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=14;" vertex="1" parent="java-group">
+          <mxGeometry x="385" y="210" width="290" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="water-view" value="&lt;b&gt;WaterProgressView.java&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Custom View que desenha o copo, a água, o percentual e as estrelas&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;spacing=7;" vertex="1" parent="widget-group">
+          <mxGeometry x="25" y="75" width="240" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="resources-group" value="Recursos XML — res" style="swimlane;html=1;rounded=1;startSize=38;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="820" y="110" width="300" height="500" as="geometry" />
+        </mxCell>
+        <mxCell id="layouts" value="&lt;b&gt;layout/&lt;/b&gt;&lt;br&gt;activity_main.xml&lt;br&gt;item_registro.xml&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;Estrutura visual das telas&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;spacing=7;" vertex="1" parent="resources-group">
+          <mxGeometry x="30" y="65" width="240" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="values" value="&lt;b&gt;values/&lt;/b&gt;&lt;br&gt;strings.xml · colors.xml&lt;br&gt;attrs.xml · themes.xml&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;Textos, cores, atributos e tema&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;spacing=7;" vertex="1" parent="resources-group">
+          <mxGeometry x="30" y="185" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="drawables" value="&lt;b&gt;drawable/ e mipmap/&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Fundos, formas e ícone do aplicativo&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;spacing=7;" vertex="1" parent="resources-group">
+          <mxGeometry x="30" y="310" width="240" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="manifest" value="&lt;b&gt;AndroidManifest.xml&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Declara a aplicação e a atividade inicial&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;spacing=7;" vertex="1" parent="resources-group">
+          <mxGeometry x="30" y="405" width="240" height="65" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-activity-storage" value="lê e grava" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;fontSize=11;" edge="1" parent="java-group" source="activity" target="storage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-storage-registro" value="mantém lista de" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;fontSize=11;" edge="1" parent="model-group" source="storage" target="registro">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-activity-view" value="atualiza" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;fontSize=11;" edge="1" parent="java-group" source="activity" target="water-view">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-layout-activity" value="setContentView / findViewById" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#9673a6;fontSize=11;" edge="1" parent="1" source="layouts" target="activity">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-values-view" value="cores, textos e atributos" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#9673a6;fontSize=11;" edge="1" parent="1" source="values" target="water-view">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend" value="Fluxo principal: usuário → MainActivity → modelo/armazenamento → atualização da interface" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=14;align=center;" vertex="1" parent="1">
+          <mxGeometry x="190" y="660" width="790" height="55" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

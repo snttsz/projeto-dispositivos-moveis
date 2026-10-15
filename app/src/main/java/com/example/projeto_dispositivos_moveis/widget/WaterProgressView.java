@@ -1,27 +1,32 @@
 package com.example.projeto_dispositivos_moveis.widget;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+
+import com.example.projeto_dispositivos_moveis.R;
 
 public class WaterProgressView extends View {
-    //centralizaçao do componente do WaterProgress
 
-    private static final float DEFAULT_WIDTH_DP = 200f;
-    private static final float DEFAULT_HEIGHT_DP = 240f;
+    private static final int DEFAULT_MAX_VALUE = 2000;
 
-    private final GlassGeometry geometry;
-    private final WaterProgressPainter painter;
-    private final WaterProgressState state;
-    private final WaterProgressLabels labels;
-    private final PercentAnimator animator;
-    private final String title;
-
+    private int maxValue = DEFAULT_MAX_VALUE;
+    private int consumption;
+    private int progressColor;
+    private int overColor;
+    private int textColor;
+    private int outlineColor;
+    private String title;
     private boolean absoluteMode;
+
+    private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     public WaterProgressView(Context context) {
         this(context, null);
@@ -29,36 +34,63 @@ public class WaterProgressView extends View {
 
     public WaterProgressView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        WaterProgressAttributes attributes = WaterProgressAttributes.from(context, attrs);
-        geometry = new GlassGeometry(getResources().getDisplayMetrics().density);
-        painter = new WaterProgressPainter(attributes);
-        state = new WaterProgressState(attributes.getMaxValue());
-        labels = new WaterProgressLabels(context);
-        animator = new PercentAnimator(this::invalidate);
-        title = attributes.getTitle();
-        setOnClickListener(view -> toggleDisplayMode());
+        readAttributes(context, attrs);
+        setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                absoluteMode = !absoluteMode;
+                invalidate();
+            }
+        });
     }
 
-    public void setMaxValue(int maxValue) {
-        if (maxValue <= 0) {
+    private void readAttributes(Context context, @Nullable AttributeSet attrs) {
+        progressColor = ContextCompat.getColor(context, R.color.water);
+        overColor = ContextCompat.getColor(context, R.color.water_over);
+        textColor = ContextCompat.getColor(context, R.color.primary);
+        outlineColor = ContextCompat.getColor(context, R.color.foreground);
+        title = context.getString(R.string.titulo_consumo);
+
+        if (attrs == null) {
             return;
         }
-        state.setMaxValue(maxValue);
-        refresh();
+
+        TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.WaterProgressView);
+        int configuredMaxValue = array.getInt(
+                R.styleable.WaterProgressView_maxValue, DEFAULT_MAX_VALUE);
+        if (configuredMaxValue > 0) {
+            maxValue = configuredMaxValue;
+        }
+        progressColor = array.getColor(R.styleable.WaterProgressView_progressColor, progressColor);
+        overColor = array.getColor(R.styleable.WaterProgressView_overColor, overColor);
+        textColor = array.getColor(R.styleable.WaterProgressView_textColor, textColor);
+        outlineColor = array.getColor(R.styleable.WaterProgressView_outlineColor, outlineColor);
+        String configuredTitle = array.getString(R.styleable.WaterProgressView_title);
+        if (configuredTitle != null) {
+            title = configuredTitle;
+        }
+        array.recycle();
+    }
+
+    public void setMaxValue(int value) {
+        if (value > 0) {
+            maxValue = value;
+            invalidate();
+        }
     }
 
     public int getMaxValue() {
-        return state.getMaxValue();
+        return maxValue;
     }
 
-    public void setConsumption(int consumption) {
-        state.setConsumption(consumption);
-        refresh();
+    public void setConsumption(int value) {
+        consumption = Math.max(0, value);
+        invalidate();
     }
 
     public void setProgress(int percent) {
-        state.setPercent(percent);
-        refresh();
+        consumption = Math.max(0, percent) * maxValue / 100;
+        invalidate();
     }
 
     public boolean isAbsoluteMode() {
@@ -71,62 +103,102 @@ public class WaterProgressView extends View {
     }
 
     public boolean isAcimaDaMeta() {
-        return state.isOverGoal();
-    }
-
-    private void toggleDisplayMode() {
-        absoluteMode = !absoluteMode;
-        invalidate();
-    }
-
-    private void refresh() {
-        animator.animateTo(state.getPercent());
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        setMeasuredDimension(
-                resolveSize(dpToPx(DEFAULT_WIDTH_DP), widthMeasureSpec),
-                resolveSize(dpToPx(DEFAULT_HEIGHT_DP), heightMeasureSpec));
-    }
-
-    @Override
-    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
-        super.onSizeChanged(width, height, oldWidth, oldHeight);
-        geometry.update(width, height);
+        return consumption > maxValue;
     }
 
     @Override
     protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
-        painter.draw(canvas, geometry, buildFrame());
+
+        float width = getWidth();
+        float height = getHeight();
+        float left = width * 0.25f;
+        float right = width * 0.75f;
+        float top = height * 0.22f;
+        float bottom = height * 0.78f;
+
+        drawTitle(canvas, width, height);
+        drawWater(canvas, left, right, top, bottom, width);
+        drawGlass(canvas, left, right, top, bottom, width);
+        drawStars(canvas, width, height);
+        drawValue(canvas, width, height);
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        animator.cancel();
-        super.onDetachedFromWindow();
+    private void drawTitle(Canvas canvas, float width, float height) {
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(textColor);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(height * 0.07f);
+        paint.setFakeBoldText(true);
+        canvas.drawText(title, width / 2f, height * 0.11f, paint);
     }
 
-    private WaterProgressFrame buildFrame() {
-        float displayedPercent = animator.getCurrent();
-        return new WaterProgressFrame(
-                displayedPercent,
-                title,
-                buildLabel(displayedPercent),
-                labels.overGoalAlert(),
-                state.isOverGoal(),
-                state.isGoalReached());
-    }
+    private void drawWater(Canvas canvas, float left, float right, float top,
+                           float bottom, float width) {
+        float percent = Math.min(100f, consumption * 100f / maxValue);
+        float waterTop = bottom - (bottom - top) * percent / 100f;
+        float bottomMargin = width * 0.05f;
 
-    private String buildLabel(float displayedPercent) {
-        if (absoluteMode) {
-            return labels.absolute(state.consumptionAt(displayedPercent), state.getMaxValue());
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(3f);
+        paint.setColor(isAcimaDaMeta() ? overColor : progressColor);
+
+        for (float y = waterTop; y <= bottom; y += 2f) {
+            float position = (y - top) / (bottom - top);
+            float sideMargin = bottomMargin * position;
+            canvas.drawLine(left + sideMargin, y, right - sideMargin, y, paint);
         }
-        return labels.percent(displayedPercent);
+
+        if (percent > 0f && percent < 100f) {
+            float surfaceMargin = bottomMargin * ((waterTop - top) / (bottom - top));
+            paint.setStrokeWidth(4f);
+            canvas.drawLine(left + surfaceMargin, waterTop,
+                    right - surfaceMargin, waterTop, paint);
+        }
     }
 
-    private int dpToPx(float dp) {
-        return (int) (dp * getResources().getDisplayMetrics().density);
+    private void drawGlass(Canvas canvas, float left, float right, float top,
+                           float bottom, float width) {
+        float bottomMargin = width * 0.05f;
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(6f);
+        paint.setColor(outlineColor);
+        canvas.drawLine(left, top, right, top, paint);
+        canvas.drawLine(left, top, left + bottomMargin, bottom, paint);
+        canvas.drawLine(right, top, right - bottomMargin, bottom, paint);
+        canvas.drawLine(left + bottomMargin, bottom, right - bottomMargin, bottom, paint);
+    }
+
+    private void drawStars(Canvas canvas, float width, float height) {
+        if (consumption < maxValue) {
+            return;
+        }
+
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(isAcimaDaMeta() ? overColor : progressColor);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(height * 0.07f);
+        paint.setFakeBoldText(false);
+        canvas.drawText("★", width * 0.16f, height * 0.36f, paint);
+        canvas.drawText("★", width * 0.84f, height * 0.42f, paint);
+        canvas.drawText("★", width * 0.18f, height * 0.65f, paint);
+        canvas.drawText("★", width * 0.82f, height * 0.69f, paint);
+    }
+
+    private void drawValue(Canvas canvas, float width, float height) {
+        int percent = Math.round(consumption * 100f / maxValue);
+        String value;
+        if (absoluteMode) {
+            value = getContext().getString(R.string.absoluto_meta, consumption, maxValue);
+        } else {
+            value = getContext().getString(R.string.percentual_meta, percent);
+        }
+
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(isAcimaDaMeta() ? overColor : textColor);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(height * 0.08f);
+        paint.setFakeBoldText(true);
+        canvas.drawText(value, width / 2f, height * 0.91f, paint);
     }
 }
